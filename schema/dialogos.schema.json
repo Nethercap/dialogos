@@ -1,0 +1,473 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "Dialogos project",
+	"description": "A Dialogos project (file format version 1): who talks, what they say, what the player can answer, when each talk can happen and what it changes. See docs/FORMAT.md. Fields that would say nothing (empty text, empty lists, false) are left out of files, so a missing field means its default. Games may add fields of their own anywhere except inside conditions and effects.",
+	"type": "object",
+	"required": ["format", "version"],
+	"properties": {
+		"format": {"title": "Format", "description": "Always \"dialogos\".", "const": "dialogos"},
+		"version": {"title": "Format version", "description": "The version of the file format. This schema is for version 1.", "const": 1},
+		"title": {"title": "Title", "description": "The project's name.", "type": "string"},
+		"lang": {"title": "Language", "description": "The language the talks are written in (\"en\", \"es\"...).", "type": "string", "examples": ["en", "es"]},
+		"stats": {"title": "Stats", "description": "The numbers the talks move: trust, romance, money...", "type": "array", "items": {"$ref": "#/$defs/stat"}},
+		"time": {"$ref": "#/$defs/time"},
+		"places": {"title": "Places", "description": "Where talks can happen and where the player can be.", "type": "array", "items": {"$ref": "#/$defs/place"}},
+		"items": {"title": "Items", "description": "Things the player can have, give or show.", "type": "array", "items": {"$ref": "#/$defs/item"}},
+		"flags": {"title": "Flags", "description": "On/off marks the game sets itself, or that start on. Flags that only the talks turn on and off need not be listed.", "type": "array", "items": {"$ref": "#/$defs/flag"}},
+		"limits": {"$ref": "#/$defs/limits"},
+		"characters": {"title": "Characters", "description": "Who talks. The player is the character with the id \"player\".", "type": "array", "items": {"$ref": "#/$defs/character"}},
+		"dialogues": {"title": "Dialogues", "description": "The talks. For each character, a game should prefer the first one that can start.", "type": "array", "items": {"$ref": "#/$defs/dialogue"}}
+	},
+	"$defs": {
+		"id": {"description": "An id: what the file uses to point at things (names are only shown).", "type": "string", "minLength": 1},
+		"ids": {"type": "array", "items": {"$ref": "#/$defs/id"}},
+		"notes": {"title": "Notes", "description": "For the writers. The game doesn't show it.", "type": "string"},
+		"color": {"title": "Colour", "description": "The colour the editor shows it in, like \"#ff6fa8\".", "type": "string"},
+		"hour": {"type": "integer", "minimum": 0, "maximum": 23},
+		"op": {"title": "Comparison", "description": "How the value is compared. Missing means \"==\" (\">=\" in item conditions).", "enum": [">=", "<=", "==", "!=", ">", "<"]},
+		"statValues": {"description": "Stat ids and their values.", "type": "object", "propertyNames": {"minLength": 1}, "additionalProperties": {"type": "number"}},
+		"stat": {
+			"title": "Stat",
+			"description": "A number the talks move.",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"name": {"title": "Name", "type": "string"},
+				"scope": {"title": "Scope", "description": "\"character\": each character has their own value (how they see the player), also used between two characters. \"global\": one value for the whole game.", "enum": ["character", "global"], "default": "character"},
+				"min": {"title": "Minimum", "description": "Changes never take it below this.", "type": "number"},
+				"max": {"title": "Maximum", "description": "Changes never take it above this.", "type": "number"},
+				"start": {"title": "Start", "description": "Where it begins, unless a character's sheet says otherwise.", "type": "number", "default": 0},
+				"color": {"$ref": "#/$defs/color"},
+				"notes": {"$ref": "#/$defs/notes"}
+			}
+		},
+		"time": {
+			"title": "Time",
+			"description": "The day count, the parts of the day and the weekdays.",
+			"type": "object",
+			"properties": {
+				"start": {
+					"title": "Start",
+					"description": "When and where the game starts.",
+					"type": "object",
+					"properties": {
+						"day": {"title": "Day", "description": "The day number the game starts on.", "type": "integer", "default": 1},
+						"hour": {"$ref": "#/$defs/hour", "title": "Hour", "description": "The hour the game starts at (0-23). Missing: the start of the first phase, or 8."},
+						"place": {"$ref": "#/$defs/id", "title": "Place", "description": "Where the player is when the game starts."}
+					}
+				},
+				"phases": {"title": "Phases", "description": "The parts of the day. An hour falls in the last phase that started by then; before the first one it is still the last one (night, past midnight).", "type": "array", "items": {"$ref": "#/$defs/phase"}},
+				"weekdays": {"title": "Weekdays", "description": "Optional. Day 1 is the first on the list, day 2 the next, and round.", "type": "array", "items": {"$ref": "#/$defs/weekday"}}
+			}
+		},
+		"phase": {
+			"title": "Phase",
+			"description": "A part of the day.",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"name": {"title": "Name", "type": "string"},
+				"start": {"$ref": "#/$defs/hour", "title": "Start", "description": "The hour it starts at (0-23)."}
+			}
+		},
+		"weekday": {
+			"title": "Weekday",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"name": {"title": "Name", "type": "string"}
+			}
+		},
+		"place": {
+			"title": "Place",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"name": {"title": "Name", "type": "string"},
+				"notes": {"$ref": "#/$defs/notes"}
+			}
+		},
+		"item": {
+			"title": "Item",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"name": {"title": "Name", "type": "string"},
+				"tags": {"title": "Tags", "description": "Kinds of thing it is, so a talk can react to a kind (given_tag) instead of a list.", "type": "array", "items": {"type": "string", "minLength": 1}},
+				"start": {"title": "Start", "description": "How many the player has when the game starts.", "type": "integer", "minimum": 0, "default": 0},
+				"notes": {"$ref": "#/$defs/notes"}
+			}
+		},
+		"flag": {
+			"title": "Flag",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"start": {"title": "Starts on", "type": "boolean", "default": false},
+				"notes": {"$ref": "#/$defs/notes"}
+			}
+		},
+		"limits": {
+			"title": "Limits",
+			"description": "The editor's checks for the game's text box. 0 or missing: no check. The game may ignore them.",
+			"type": "object",
+			"properties": {
+				"lineChars": {"title": "Characters per line", "type": "integer", "minimum": 0},
+				"optionChars": {"title": "Characters per option", "type": "integer", "minimum": 0},
+				"options": {"title": "Options at once", "type": "integer", "minimum": 0}
+			}
+		},
+		"character": {
+			"title": "Character",
+			"description": "Someone who talks. \"narrator\" is not a character but can say lines.",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id", "description": "\"player\" is the player."},
+				"name": {"title": "Name", "description": "What they are called. For the player, what the player is called (\"You\", \"Detective\"...).", "type": "string"},
+				"group": {"title": "Group", "description": "Where the editor files them.", "type": "string"},
+				"color": {"$ref": "#/$defs/color"},
+				"notes": {"$ref": "#/$defs/notes"},
+				"moods": {"title": "Moods", "description": "The faces or tones their lines can have.", "type": "array", "items": {"type": "string", "minLength": 1}},
+				"stats": {"$ref": "#/$defs/statValues", "title": "Stats", "description": "Where each character stat starts for them."},
+				"likes": {"$ref": "#/$defs/ids", "title": "Likes", "description": "Items, for the condition given_liked."},
+				"dislikes": {"$ref": "#/$defs/ids", "title": "Dislikes", "description": "Items, for the condition given_disliked."},
+				"relations": {"title": "Relations", "description": "How they see other characters.", "type": "array", "items": {"$ref": "#/$defs/relation"}}
+			}
+		},
+		"relation": {
+			"title": "Relation",
+			"type": "object",
+			"required": ["to"],
+			"properties": {
+				"to": {"$ref": "#/$defs/id", "title": "To", "description": "The other character."},
+				"label": {"title": "Label", "description": "Only a note (\"her boss\", \"owes him money\").", "type": "string"},
+				"values": {"$ref": "#/$defs/statValues", "title": "Values", "description": "Where the character stats start between the two."}
+			}
+		},
+		"dialogue": {
+			"title": "Dialogue",
+			"description": "A talk.",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id"},
+				"character": {"$ref": "#/$defs/id", "title": "Character", "description": "Whose talk it is. Conditions and effects that name no one mean this character."},
+				"title": {"title": "Title", "type": "string"},
+				"status": {"title": "Status", "description": "The game decides what to do with drafts.", "enum": ["draft", "ready"], "default": "draft"},
+				"places": {"$ref": "#/$defs/ids", "title": "Places", "description": "Where it can happen. Missing: anywhere."},
+				"required": {"title": "Required", "description": "A story talk that must happen (a note for the game: the format doesn't enforce it).", "type": "boolean", "default": false},
+				"repeat": {"title": "Repeat", "description": "It can happen again after it has been seen once.", "type": "boolean", "default": false},
+				"if": {"$ref": "#/$defs/conditions", "title": "Conditions", "description": "All must hold for it to start."},
+				"notes": {"$ref": "#/$defs/notes"},
+				"start": {"$ref": "#/$defs/id", "title": "Start", "description": "The id of the first node."},
+				"nodes": {"title": "Nodes", "description": "The talk's blocks, by id.", "type": "object", "propertyNames": {"minLength": 1, "not": {"enum": ["end", "back"]}}, "additionalProperties": {"$ref": "#/$defs/node"}}
+			}
+		},
+		"node": {
+			"title": "Node",
+			"description": "A block of lines followed by what happens next.",
+			"type": "object",
+			"properties": {
+				"lines": {"title": "Lines", "description": "Said one after the other.", "type": "array", "items": {"$ref": "#/$defs/line"}},
+				"effects": {"$ref": "#/$defs/effects", "description": "Applied once the lines are said."},
+				"mode": {"title": "Mode", "description": "What comes after the lines. \"line\": go on to next. \"choice\": the player picks one of the options that hold. \"give\": the player gives (or shows) an item, or nothing, then the first option that holds. \"branch\": the first option that holds. \"random\": one at random of the options that hold.", "enum": ["line", "choice", "give", "branch", "random"], "default": "line"},
+				"ask": {"$ref": "#/$defs/ask"},
+				"options": {"title": "Options", "description": "In every mode but \"line\". In give and branch, an option with no conditions holds always: put it last, as the else.", "type": "array", "items": {"$ref": "#/$defs/option"}},
+				"next": {"title": "Next", "description": "In mode \"line\": a node id, or \"end\".", "type": "string", "minLength": 1, "not": {"const": "back"}, "default": "end"}
+			}
+		},
+		"line": {
+			"title": "Line",
+			"type": "object",
+			"properties": {
+				"who": {"$ref": "#/$defs/id", "title": "Who", "description": "A character's id, \"player\" or \"narrator\"."},
+				"text": {"title": "Text", "description": "Can carry {player} (the player's name), {name} (the talk's character) and {item} (the item given, or else the one asked for).", "type": "string"},
+				"mood": {"title": "Mood", "description": "One of that character's moods.", "type": "string"}
+			}
+		},
+		"ask": {
+			"title": "Ask",
+			"description": "In mode \"give\": what the character asks for. Both fields are optional.",
+			"type": "object",
+			"properties": {
+				"item": {"$ref": "#/$defs/id", "title": "Item", "description": "The item asked for, for the condition given_asked and {item}."},
+				"text": {"title": "Text", "description": "What they ask for, in words (\"something sweet\").", "type": "string"}
+			}
+		},
+		"option": {
+			"title": "Option",
+			"description": "A player's answer (in choice), or a way on (in give, branch, random).",
+			"type": "object",
+			"required": ["id"],
+			"properties": {
+				"id": {"$ref": "#/$defs/id", "description": "Unique within the dialogue."},
+				"text": {"title": "Text", "description": "What the player says (only in choice).", "type": "string"},
+				"if": {"$ref": "#/$defs/conditions", "title": "Conditions", "description": "All must hold for the option to be offered (or the branch taken)."},
+				"effects": {"$ref": "#/$defs/effects", "description": "Applied when it is picked, before the reply."},
+				"reply": {"title": "Reply", "description": "Lines said after it.", "type": "array", "items": {"$ref": "#/$defs/line"}},
+				"next": {"title": "Next", "description": "A node id, \"end\", or \"back\" (only in choice: offer the same options again, without the ones already picked in this talk).", "type": "string", "minLength": 1, "default": "end"}
+			}
+		},
+		"conditions": {"title": "Conditions", "description": "All must hold.", "type": "array", "items": {"$ref": "#/$defs/condition"}},
+		"condition": {
+			"title": "Condition",
+			"description": "Something that holds or not, told apart by its type.",
+			"type": "object",
+			"required": ["type"],
+			"properties": {
+				"type": {"title": "Type", "enum": ["stat", "relation", "flag", "item", "day", "weekday", "phase", "hour", "place", "seen", "given", "given_not", "given_tag", "given_liked", "given_disliked", "given_asked", "given_none"]}
+			},
+			"allOf": [
+				{"if": {"required": ["type"], "properties": {"type": {"const": "stat"}}}, "then": {"$ref": "#/$defs/statCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "relation"}}}, "then": {"$ref": "#/$defs/relationCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "flag"}}}, "then": {"$ref": "#/$defs/flagCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "item"}}}, "then": {"$ref": "#/$defs/itemCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "day"}}}, "then": {"$ref": "#/$defs/dayCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "weekday"}}}, "then": {"$ref": "#/$defs/weekdayCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "phase"}}}, "then": {"$ref": "#/$defs/phaseCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "hour"}}}, "then": {"$ref": "#/$defs/hourCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "place"}}}, "then": {"$ref": "#/$defs/placeCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "seen"}}}, "then": {"$ref": "#/$defs/seenCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given"}}}, "then": {"$ref": "#/$defs/givenCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_not"}}}, "then": {"$ref": "#/$defs/givenNotCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_tag"}}}, "then": {"$ref": "#/$defs/givenTagCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_liked"}}}, "then": {"$ref": "#/$defs/givenLikedCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_disliked"}}}, "then": {"$ref": "#/$defs/givenDislikedCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_asked"}}}, "then": {"$ref": "#/$defs/givenAskedCondition"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "given_none"}}}, "then": {"$ref": "#/$defs/givenNoneCondition"}}
+			]
+		},
+		"statCondition": {
+			"description": "The stat compares to the value.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "stat"},
+				"stat": {"$ref": "#/$defs/id", "title": "Stat"},
+				"who": {"$ref": "#/$defs/id", "title": "Who", "description": "Whose value. Left out for global stats; for character stats, missing means the talk's character."},
+				"op": {"$ref": "#/$defs/op"},
+				"value": {"title": "Value", "type": "number"}
+			},
+			"additionalProperties": false
+		},
+		"relationCondition": {
+			"description": "How from sees to compares to the value.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "relation"},
+				"stat": {"$ref": "#/$defs/id", "title": "Stat"},
+				"from": {"$ref": "#/$defs/id", "title": "From"},
+				"to": {"$ref": "#/$defs/id", "title": "To"},
+				"op": {"$ref": "#/$defs/op"},
+				"value": {"title": "Value", "type": "number"}
+			},
+			"additionalProperties": false
+		},
+		"flagCondition": {
+			"description": "The flag is on (value true) or off (value false).",
+			"type": "object",
+			"properties": {
+				"type": {"const": "flag"},
+				"name": {"$ref": "#/$defs/id", "title": "Flag"},
+				"value": {"title": "Value", "description": "true: on, false: off. Missing means true, so keep false in the file.", "type": "boolean", "default": true}
+			},
+			"additionalProperties": false
+		},
+		"itemCondition": {
+			"description": "How many the player has compares to the value.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "item"},
+				"item": {"$ref": "#/$defs/id", "title": "Item"},
+				"op": {"$ref": "#/$defs/op", "default": ">="},
+				"value": {"title": "Value", "type": "number", "default": 1}
+			},
+			"additionalProperties": false
+		},
+		"dayCondition": {
+			"description": "The day number compares to the value.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "day"},
+				"op": {"$ref": "#/$defs/op"},
+				"value": {"title": "Value", "type": "number"}
+			},
+			"additionalProperties": false
+		},
+		"weekdayCondition": {
+			"description": "Today is one of these weekdays.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "weekday"},
+				"is": {"$ref": "#/$defs/ids", "title": "Weekdays"}
+			},
+			"additionalProperties": false
+		},
+		"phaseCondition": {
+			"description": "The hour falls in one of these phases.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "phase"},
+				"is": {"$ref": "#/$defs/ids", "title": "Phases"}
+			},
+			"additionalProperties": false
+		},
+		"hourCondition": {
+			"description": "from <= hour < to; past midnight when from > to (20 to 2); the whole day when they are equal.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "hour"},
+				"from": {"$ref": "#/$defs/hour", "title": "From"},
+				"to": {"$ref": "#/$defs/hour", "title": "To"}
+			},
+			"additionalProperties": false
+		},
+		"placeCondition": {
+			"description": "The player is in one of these places.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "place"},
+				"is": {"$ref": "#/$defs/ids", "title": "Places"}
+			},
+			"additionalProperties": false
+		},
+		"seenCondition": {
+			"description": "That talk has (value true) or hasn't (value false) been seen to its end.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "seen"},
+				"dialogue": {"$ref": "#/$defs/id", "title": "Dialogue"},
+				"value": {"title": "Value", "description": "true: seen, false: not yet. Missing means true, so keep false in the file.", "type": "boolean", "default": true}
+			},
+			"additionalProperties": false
+		},
+		"givenCondition": {
+			"description": "After a give node: the item given is one of these.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "given"},
+				"is": {"$ref": "#/$defs/ids", "title": "Items"}
+			},
+			"additionalProperties": false
+		},
+		"givenNotCondition": {
+			"description": "After a give node: something was given, and it's none of these.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "given_not"},
+				"is": {"$ref": "#/$defs/ids", "title": "Items"}
+			},
+			"additionalProperties": false
+		},
+		"givenTagCondition": {
+			"description": "After a give node: the item given has one of these tags.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "given_tag"},
+				"tags": {"title": "Tags", "type": "array", "items": {"type": "string", "minLength": 1}}
+			},
+			"additionalProperties": false
+		},
+		"givenLikedCondition": {"description": "After a give node: the item given is one the talk's character likes.", "type": "object", "properties": {"type": {"const": "given_liked"}}, "additionalProperties": false},
+		"givenDislikedCondition": {"description": "After a give node: the item given is one the talk's character dislikes.", "type": "object", "properties": {"type": {"const": "given_disliked"}}, "additionalProperties": false},
+		"givenAskedCondition": {"description": "After a give node: the item given is the one asked for (ask.item).", "type": "object", "properties": {"type": {"const": "given_asked"}}, "additionalProperties": false},
+		"givenNoneCondition": {"description": "After a give node: the player gave nothing.", "type": "object", "properties": {"type": {"const": "given_none"}}, "additionalProperties": false},
+		"effects": {"title": "Effects", "type": "array", "items": {"$ref": "#/$defs/effect"}},
+		"effect": {
+			"title": "Effect",
+			"description": "A change to the state (or, for event, something for the game to do), told apart by its type.",
+			"type": "object",
+			"required": ["type"],
+			"properties": {
+				"type": {"title": "Type", "enum": ["stat", "relation", "flag", "item", "time", "place", "event"]}
+			},
+			"allOf": [
+				{"if": {"required": ["type"], "properties": {"type": {"const": "stat"}}}, "then": {"$ref": "#/$defs/statEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "relation"}}}, "then": {"$ref": "#/$defs/relationEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "flag"}}}, "then": {"$ref": "#/$defs/flagEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "item"}}}, "then": {"$ref": "#/$defs/itemEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "time"}}}, "then": {"$ref": "#/$defs/timeEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "place"}}}, "then": {"$ref": "#/$defs/placeEffect"}},
+				{"if": {"required": ["type"], "properties": {"type": {"const": "event"}}}, "then": {"$ref": "#/$defs/eventEffect"}}
+			]
+		},
+		"statEffect": {
+			"description": "Adds delta to the stat, within its min and max.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "stat"},
+				"stat": {"$ref": "#/$defs/id", "title": "Stat"},
+				"who": {"$ref": "#/$defs/id", "title": "Who", "description": "Whose value. Left out for global stats; for character stats, missing means the talk's character."},
+				"delta": {"title": "Change", "description": "Can be negative.", "type": "number"}
+			},
+			"additionalProperties": false
+		},
+		"relationEffect": {
+			"description": "Adds delta to how from sees to, within the stat's min and max.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "relation"},
+				"stat": {"$ref": "#/$defs/id", "title": "Stat"},
+				"from": {"$ref": "#/$defs/id", "title": "From"},
+				"to": {"$ref": "#/$defs/id", "title": "To"},
+				"delta": {"title": "Change", "description": "Can be negative.", "type": "number"}
+			},
+			"additionalProperties": false
+		},
+		"flagEffect": {
+			"description": "Turns a flag on or off.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "flag"},
+				"name": {"$ref": "#/$defs/id", "title": "Flag"},
+				"value": {"title": "Value", "description": "true: on, false: off. Missing means true, so keep false in the file.", "type": "boolean", "default": true}
+			},
+			"additionalProperties": false
+		},
+		"itemEffect": {
+			"description": "Gives (+) or takes (-) items; never below 0. Giving an item in a give node doesn't take it away by itself.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "item"},
+				"item": {"$ref": "#/$defs/id", "title": "Item"},
+				"delta": {"title": "Change", "type": "integer"}
+			},
+			"additionalProperties": false
+		},
+		"timeEffect": {
+			"description": "Time goes forward.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "time"},
+				"unit": {"title": "Unit", "description": "\"hours\"; \"phases\" (to the start of the next part of the day, each); \"days\" (same hour).", "enum": ["hours", "phases", "days"], "default": "hours"},
+				"amount": {"title": "Amount", "type": "integer", "minimum": 0}
+			},
+			"additionalProperties": false
+		},
+		"placeEffect": {
+			"description": "The player is now in that place.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "place"},
+				"place": {"$ref": "#/$defs/id", "title": "Place"}
+			},
+			"additionalProperties": false
+		},
+		"eventEffect": {
+			"description": "Changes nothing in the state: something for the game to do.",
+			"type": "object",
+			"properties": {
+				"type": {"const": "event"},
+				"name": {"title": "Name", "description": "For code (\"play_music\", \"open_shop\").", "type": "string"},
+				"text": {"title": "Text", "description": "What it is, in words.", "type": "string"}
+			},
+			"additionalProperties": false
+		}
+	}
+}

@@ -1,0 +1,7 @@
+# What the editor writes when run from here
+/dialogos.json
+.dialogos_backups/
+*.json.tmp
+__pycache__/
+node_modules/
+.claude/

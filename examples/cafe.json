@@ -1,0 +1,706 @@
+{
+	"format": "dialogos",
+	"version": 1,
+	"title": "The Driftwood Café",
+	"lang": "en",
+	"stats": [
+		{"id": "trust", "name": "Trust", "scope": "character", "min": 0, "max": 10, "color": "#5fd4c4", "notes": "How much they rely on you."},
+		{"id": "romance", "name": "Romance", "scope": "character", "min": 0, "max": 10, "color": "#ff6fa8"},
+		{"id": "money", "name": "Money", "scope": "global", "min": 0, "start": 20, "color": "#e6d36a", "notes": "Coins in your apron."}
+	],
+	"time": {
+		"start": {"day": 1, "hour": 8, "place": "cafe"},
+		"phases": [
+			{"id": "morning", "name": "Morning", "start": 6},
+			{"id": "afternoon", "name": "Afternoon", "start": 12},
+			{"id": "evening", "name": "Evening", "start": 18},
+			{"id": "night", "name": "Night", "start": 22}
+		],
+		"weekdays": [
+			{"id": "mon", "name": "Monday"},
+			{"id": "tue", "name": "Tuesday"},
+			{"id": "wed", "name": "Wednesday"},
+			{"id": "thu", "name": "Thursday"},
+			{"id": "fri", "name": "Friday"},
+			{"id": "sat", "name": "Saturday"},
+			{"id": "sun", "name": "Sunday"}
+		]
+	},
+	"places": [
+		{"id": "cafe", "name": "Driftwood Café", "notes": "Six tables, one view, a toaster with opinions."},
+		{"id": "beach", "name": "Beach", "notes": "Upturned boats, gulls, the best sunsets on the coast."},
+		{"id": "flat", "name": "Your flat", "notes": "Above the bait shop. Smells like it."}
+	],
+	"items": [
+		{"id": "rose", "name": "Rose", "tags": ["flower", "gift"]},
+		{"id": "espresso", "name": "Espresso", "tags": ["coffee", "drink"]},
+		{"id": "lemonade", "name": "Lemonade", "tags": ["drink"]},
+		{"id": "old_letter", "name": "Old letter", "start": 1, "notes": "Sealed, addressed to Mia. Found behind a loose board in the flat."}
+	],
+	"flags": [
+		{"id": "rain", "notes": "Set by the game while it rains. The talks only read it."}
+	],
+	"limits": {"lineChars": 120, "optionChars": 40, "options": 4},
+	"characters": [
+		{"id": "player", "name": "You", "group": "Player", "color": "#ffb838", "notes": "The new barista. What they say is mostly the options they pick."},
+		{
+			"id": "mia",
+			"name": "Mia",
+			"group": "Café",
+			"color": "#7ddc6f",
+			"notes": "Owns the Driftwood. Dry, quick, kinder than she lets on. Fixes the toaster daily.",
+			"moods": ["happy", "sad", "annoyed"],
+			"stats": {"trust": 2},
+			"likes": ["espresso"],
+			"dislikes": ["lemonade"],
+			"relations": [
+				{
+					"to": "leo",
+					"label": "old friend, still owes her a window",
+					"values": {"trust": 3}
+				}
+			]
+		},
+		{
+			"id": "leo",
+			"name": "Leo",
+			"group": "Regulars",
+			"color": "#6fb7ff",
+			"notes": "Fisherman and the oldest regular. Yellow raincoat, long stories, short patience.",
+			"moods": ["happy", "grumpy"],
+			"stats": {"trust": 1},
+			"likes": ["lemonade"],
+			"relations": [
+				{
+					"to": "mia",
+					"label": "old friends",
+					"values": {"trust": 4}
+				}
+			]
+		},
+		{"id": "gull", "name": "The Gull", "group": "Wildlife", "color": "#cfd8dc", "notes": "No name, no fear, no manners. Turns up in other people's talks to steal food."}
+	],
+	"dialogues": [
+		{
+			"id": "mia_first_day",
+			"character": "mia",
+			"title": "First day at the Driftwood",
+			"status": "ready",
+			"places": ["cafe"],
+			"required": true,
+			"if": [
+				{"type": "phase", "is": ["morning"]}
+			],
+			"notes": "The opening talk. Shows the ropes and hands over the first drinks.",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"lines": [
+						{"who": "narrator", "text": "The bell over the door jingles. The café smells of coffee, salt and slightly burnt toast."},
+						{"who": "mia", "text": "We open at eight. It's... oh. You're the new barista.", "mood": "annoyed"},
+						{"who": "mia", "text": "Sorry. I'm Mia. I own the place, which mostly means I fix the toaster.", "mood": "happy"}
+					],
+					"mode": "choice",
+					"options": [
+						{
+							"id": "o1",
+							"text": "What do I need to know?",
+							"reply": [
+								{"who": "mia", "text": "Espresso machine on the left. It hisses. Ignore the hissing."},
+								{"who": "mia", "text": "If it screams, run."}
+							],
+							"next": "back"
+						},
+						{
+							"id": "o2",
+							"text": "Who comes in here?",
+							"reply": [
+								{"who": "mia", "text": "Fishermen at dawn, tourists at noon, and Leo at all hours."},
+								{"who": "mia", "text": "He'll want a lemonade. Cold enough to hurt his teeth."}
+							],
+							"next": "back"
+						},
+						{"id": "o3", "text": "Do I get a name tag?", "next": "n2"},
+						{"id": "o4", "text": "Let's get to work.", "next": "n3"}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "mia", "text": "Of course. Hold still."},
+						{"who": "narrator", "text": "She writes on a sticker with great care and slaps it on your apron. It says: {player}."},
+						{"who": "mia", "text": "Suits you.", "mood": "happy"}
+					],
+					"effects": [
+						{"type": "stat", "stat": "trust", "delta": 1, "who": "mia"}
+					],
+					"mode": "line",
+					"next": "n3"
+				},
+				"n3": {
+					"lines": [
+						{"who": "mia", "text": "Two espressos to practise on, and a lemonade for Leo. He'll show up. He always does."},
+						{"who": "mia", "text": "Don't ask me to taste the lemonade. I can't stand the stuff.", "mood": "annoyed"}
+					],
+					"effects": [
+						{"type": "item", "item": "espresso", "delta": 2},
+						{"type": "item", "item": "lemonade", "delta": 1},
+						{"type": "event", "name": "show_tutorial", "text": "Show how the till and the espresso machine work."}
+					],
+					"mode": "line",
+					"next": "end"
+				}
+			}
+		},
+		{
+			"id": "leo_usual",
+			"character": "leo",
+			"title": "Leo's usual",
+			"status": "ready",
+			"places": ["cafe"],
+			"repeat": true,
+			"if": [
+				{"type": "seen", "dialogue": "mia_first_day", "value": true},
+				{"type": "hour", "from": 8, "to": 18}
+			],
+			"notes": "Leo drops in every day for a very cold lemonade. Getting it right earns the invitation to the sunset.",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"mode": "branch",
+					"options": [
+						{
+							"id": "o1",
+							"if": [
+								{"type": "seen", "dialogue": "leo_usual", "value": false}
+							],
+							"reply": [
+								{"who": "narrator", "text": "A man in a yellow raincoat drops onto the stool by the window. He smells of the sea. Mostly fish."},
+								{"who": "leo", "text": "You're new. I'm Leo. Whatever Mia told you about me, none of it is true.", "mood": "happy"}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o2",
+							"reply": [
+								{"who": "leo", "text": "Morning, kid. You know what I want.", "mood": "grumpy"}
+							],
+							"next": "n2"
+						}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "leo", "text": "My usual. {item}, cold enough to make my teeth hurt."}
+					],
+					"mode": "give",
+					"ask": {"item": "lemonade", "text": "a lemonade, very cold"},
+					"options": [
+						{
+							"id": "o3",
+							"if": [
+								{"type": "given_asked"}
+							],
+							"effects": [
+								{"type": "item", "item": "lemonade", "delta": -1},
+								{"type": "stat", "stat": "money", "delta": 3},
+								{"type": "stat", "stat": "trust", "delta": 1, "who": "leo"}
+							],
+							"reply": [
+								{"who": "leo", "text": "Ahh. That's the stuff. You'll do, kid.", "mood": "happy"}
+							],
+							"next": "n3"
+						},
+						{
+							"id": "o4",
+							"if": [
+								{"type": "given", "is": ["espresso"]}
+							],
+							"effects": [
+								{"type": "item", "item": "espresso", "delta": -1},
+								{"type": "stat", "stat": "money", "delta": 2}
+							],
+							"reply": [
+								{"who": "leo", "text": "Espresso? I'll be awake until Thursday."},
+								{"who": "leo", "text": "Fine. Thursday it is.", "mood": "grumpy"}
+							],
+							"next": "n3"
+						},
+						{
+							"id": "o5",
+							"if": [
+								{"type": "given_none"}
+							],
+							"effects": [
+								{"type": "stat", "stat": "trust", "delta": -1, "who": "leo"}
+							],
+							"reply": [
+								{"who": "leo", "text": "Nothing? Just the view, then. Fair enough.", "mood": "grumpy"}
+							],
+							"next": "end"
+						},
+						{
+							"id": "o6",
+							"reply": [
+								{"who": "leo", "text": "{item}? Keep it, kid. My pockets are full of strange things already."}
+							],
+							"next": "n3"
+						}
+					]
+				},
+				"n3": {
+					"mode": "branch",
+					"options": [
+						{
+							"id": "o7",
+							"if": [
+								{"type": "given_not", "is": ["lemonade"]}
+							],
+							"reply": [
+								{"who": "leo", "text": "Bring me a lemonade next time and I'll tell you a secret."}
+							],
+							"next": "end"
+						},
+						{"id": "o8", "next": "n4"}
+					]
+				},
+				"n4": {
+					"lines": [
+						{"who": "leo", "text": "Here's a secret: the beach, any weekend evening. Best sunset on the coast. Free, too."},
+						{"who": "leo", "text": "Don't tell the tourists.", "mood": "happy"}
+					],
+					"effects": [
+						{"type": "flag", "name": "invited_to_sunset", "value": true}
+					],
+					"mode": "line",
+					"next": "end"
+				}
+			}
+		},
+		{
+			"id": "mia_closing",
+			"character": "mia",
+			"title": "Closing time",
+			"status": "ready",
+			"places": ["cafe"],
+			"repeat": true,
+			"if": [
+				{"type": "seen", "dialogue": "mia_first_day", "value": true},
+				{"type": "phase", "is": ["evening"]}
+			],
+			"notes": "Every evening: Mia pays up and sends the player home. How warm she is depends on trust and romance.",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"lines": [
+						{"who": "narrator", "text": "{name} flips the sign on the door to CLOSED and counts the till twice."}
+					],
+					"mode": "branch",
+					"options": [
+						{
+							"id": "o1",
+							"if": [
+								{"type": "stat", "stat": "trust", "op": ">=", "value": 6, "who": "mia"},
+								{"type": "stat", "stat": "romance", "op": ">", "value": 1, "who": "mia"}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o2",
+							"if": [
+								{"type": "stat", "stat": "trust", "op": ">=", "value": 3, "who": "mia"}
+							],
+							"reply": [
+								{"who": "mia", "text": "Not bad today. You only scared one tourist."}
+							],
+							"next": "n3"
+						},
+						{
+							"id": "o3",
+							"reply": [
+								{"who": "mia", "text": "The mop's in the back. It misses you.", "mood": "annoyed"}
+							],
+							"next": "n3"
+						}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "mia", "text": "Stay for one more coffee? On the house. Don't tell the owner.", "mood": "happy"},
+						{"who": "mia", "text": "Oh, wait. I'm the owner.", "mood": "happy"}
+					],
+					"mode": "choice",
+					"options": [
+						{
+							"id": "o4",
+							"text": "Just one.",
+							"effects": [
+								{"type": "stat", "stat": "romance", "delta": 1, "who": "mia"},
+								{"type": "time", "unit": "hours", "amount": 1}
+							],
+							"reply": [
+								{"who": "narrator", "text": "One coffee turns into two. Outside, the waves keep time."}
+							],
+							"next": "n3"
+						},
+						{
+							"id": "o5",
+							"text": "Rain check?",
+							"reply": [
+								{"who": "mia", "text": "I'll hold you to that."}
+							],
+							"next": "n3"
+						}
+					]
+				},
+				"n3": {
+					"lines": [
+						{"who": "mia", "text": "Here's your pay. Don't spend it all on lemonade."}
+					],
+					"effects": [
+						{"type": "stat", "stat": "money", "delta": 10},
+						{"type": "event", "name": "close_shop", "text": "Lights off, shutters down, the radio fades out."},
+						{"type": "place", "place": "flat"},
+						{"type": "time", "unit": "phases", "amount": 1}
+					],
+					"mode": "line",
+					"next": "end"
+				}
+			}
+		},
+		{
+			"id": "mia_rainy_day",
+			"character": "mia",
+			"title": "Rain on the windows",
+			"status": "ready",
+			"places": ["cafe"],
+			"if": [
+				{"type": "flag", "name": "rain", "value": true},
+				{"type": "day", "op": ">=", "value": 2},
+				{"type": "seen", "dialogue": "mia_first_day", "value": true}
+			],
+			"notes": "The game turns the rain flag on. Nobody comes in, and Mia sulks until something cheers her up.",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"lines": [
+						{"who": "narrator", "text": "Rain drums on the windows. Not a single customer all morning."},
+						{"who": "mia", "text": "Nobody wants coffee by the sea when the sea is falling on their heads.", "mood": "sad"},
+						{"who": "mia", "text": "Go on. Cheer me up. I dare you.", "mood": "sad"}
+					],
+					"mode": "give",
+					"ask": {"text": "something to cheer her up"},
+					"options": [
+						{
+							"id": "o1",
+							"if": [
+								{"type": "given_tag", "tags": ["flower"]}
+							],
+							"effects": [
+								{"type": "item", "item": "rose", "delta": -1},
+								{"type": "stat", "stat": "romance", "delta": 1, "who": "mia"},
+								{"type": "stat", "stat": "trust", "delta": 1, "who": "mia"}
+							],
+							"reply": [
+								{"who": "mia", "text": "A rose? For me?", "mood": "happy"},
+								{"who": "mia", "text": "Nobody's given me flowers in years. Don't tell Leo, he'll sulk.", "mood": "happy"}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o2",
+							"if": [
+								{"type": "given_liked"}
+							],
+							"effects": [
+								{"type": "item", "item": "espresso", "delta": -1},
+								{"type": "stat", "stat": "trust", "delta": 2, "who": "mia"}
+							],
+							"reply": [
+								{"who": "mia", "text": "An espresso. Two days here and you already know me.", "mood": "happy"}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o3",
+							"if": [
+								{"type": "given_disliked"}
+							],
+							"effects": [
+								{"type": "stat", "stat": "trust", "delta": -1, "who": "mia"}
+							],
+							"reply": [
+								{"who": "mia", "text": "Lemonade. On a day like this. Are you cheering me up or finishing me off?", "mood": "annoyed"}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o4",
+							"if": [
+								{"type": "given_none"}
+							],
+							"reply": [
+								{"who": "mia", "text": "Nothing? Well. You're standing here. That's something, I suppose."}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o5",
+							"reply": [
+								{"who": "mia", "text": "{item}? Huh. Thanks. I think."}
+							],
+							"next": "n2"
+						}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "mia", "text": "You know what? Nobody's coming in this weather. Take the rest of the day off."}
+					],
+					"mode": "choice",
+					"options": [
+						{
+							"id": "o6",
+							"text": "Thanks, boss. See you tomorrow.",
+							"effects": [
+								{"type": "place", "place": "flat"},
+								{"type": "time", "unit": "days", "amount": 1}
+							],
+							"reply": [
+								{"who": "mia", "text": "Go, before I change my mind."}
+							],
+							"next": "end"
+						},
+						{
+							"id": "o7",
+							"text": "I'll stay and keep you company.",
+							"effects": [
+								{"type": "stat", "stat": "trust", "delta": 1, "who": "mia"},
+								{"type": "time", "unit": "hours", "amount": 2}
+							],
+							"reply": [
+								{"who": "narrator", "text": "The two of you watch the rain for a while. It's nicer than it sounds."}
+							],
+							"next": "end"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "leo_sunset",
+			"character": "leo",
+			"title": "Sunset on the beach",
+			"status": "ready",
+			"places": ["beach"],
+			"if": [
+				{"type": "flag", "name": "invited_to_sunset", "value": true},
+				{"type": "flag", "name": "rain", "value": false},
+				{"type": "weekday", "is": ["sat", "sun"]},
+				{"type": "phase", "is": ["evening"]},
+				{"type": "stat", "stat": "trust", "op": ">=", "value": 2, "who": "leo"}
+			],
+			"notes": "Only after Leo's invitation, on a dry weekend evening.",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"lines": [
+						{"who": "narrator", "text": "The sun sinks into the sea like a coin into a slot. Leo is sitting on an upturned boat."},
+						{"who": "leo", "text": "You came. Sit. The boat doesn't bite. The crabs under it might.", "mood": "happy"}
+					],
+					"mode": "choice",
+					"options": [
+						{"id": "o1", "text": "Tell me a story.", "next": "n2"},
+						{"id": "o2", "text": "How long have you known Mia?", "next": "n3"},
+						{"id": "o3", "text": "I'm just here for the sunset.", "next": "n4"}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "leo", "text": "A story. Let me see..."}
+					],
+					"mode": "random",
+					"options": [
+						{
+							"id": "o4",
+							"reply": [
+								{"who": "leo", "text": "Once I caught a tuna so big it towed me halfway to Portugal."},
+								{"who": "leo", "text": "Lovely people. Terrible at giving tuna back."}
+							],
+							"next": "n4"
+						},
+						{
+							"id": "o5",
+							"reply": [
+								{"who": "leo", "text": "Forty years at sea and I've never seen a mermaid."},
+								{"who": "leo", "text": "Saw a merman once. He owed me money.", "mood": "grumpy"}
+							],
+							"next": "n4"
+						},
+						{
+							"id": "o6",
+							"reply": [
+								{"who": "gull", "text": "Skraa."},
+								{"who": "narrator", "text": "A gull lands on the boat, takes Leo's sandwich and leaves without a word of thanks."},
+								{"who": "leo", "text": "That's the story. That's every story, really.", "mood": "grumpy"}
+							],
+							"next": "n4"
+						}
+					]
+				},
+				"n3": {
+					"mode": "branch",
+					"options": [
+						{
+							"id": "o7",
+							"if": [
+								{"type": "relation", "stat": "trust", "from": "leo", "to": "mia", "op": ">=", "value": 5}
+							],
+							"reply": [
+								{"who": "leo", "text": "Mia? Forever. I'd jump in the sea for her. I'd complain the whole way down, mind."}
+							],
+							"next": "n4"
+						},
+						{
+							"id": "o8",
+							"if": [
+								{"type": "relation", "stat": "trust", "from": "leo", "to": "mia", "op": ">=", "value": 3}
+							],
+							"effects": [
+								{"type": "relation", "stat": "trust", "from": "leo", "to": "mia", "delta": 1}
+							],
+							"reply": [
+								{"who": "leo", "text": "We grew up on the same street. She stole my bait, I stole her apples."},
+								{"who": "leo", "text": "Talking about her makes me miss her. Daft. She's two streets away.", "mood": "happy"}
+							],
+							"next": "n4"
+						},
+						{
+							"id": "o9",
+							"reply": [
+								{"who": "leo", "text": "Long enough to know better than to talk about her behind her back.", "mood": "grumpy"}
+							],
+							"next": "n4"
+						}
+					]
+				},
+				"n4": {
+					"lines": [
+						{"who": "narrator", "text": "The sky goes orange, then pink, then the colour of a bruise."},
+						{"who": "leo", "text": "Here. Washed up this morning, still fresh. Somebody's date went badly."},
+						{"who": "leo", "text": "Give it to someone who'll like it. Not me. I'd only put it in a bucket."}
+					],
+					"effects": [
+						{"type": "item", "item": "rose", "delta": 1},
+						{"type": "flag", "name": "invited_to_sunset", "value": false}
+					],
+					"mode": "choice",
+					"options": [
+						{
+							"id": "o10",
+							"text": "Walk me home?",
+							"effects": [
+								{"type": "stat", "stat": "trust", "delta": 1, "who": "leo"},
+								{"type": "place", "place": "flat"},
+								{"type": "time", "unit": "phases", "amount": 1}
+							],
+							"reply": [
+								{"who": "narrator", "text": "He walks you to your door, explaining knots the whole way. All of them."}
+							],
+							"next": "end"
+						},
+						{
+							"id": "o11",
+							"text": "I'll stay a little longer.",
+							"effects": [
+								{"type": "time", "unit": "hours", "amount": 1}
+							],
+							"reply": [
+								{"who": "leo", "text": "Suit yourself. Watch out for the gull."}
+							],
+							"next": "end"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "mia_old_letter",
+			"character": "mia",
+			"title": "The old letter",
+			"status": "draft",
+			"places": ["cafe", "beach"],
+			"if": [
+				{"type": "item", "item": "old_letter", "op": ">=", "value": 1},
+				{"type": "seen", "dialogue": "leo_sunset", "value": true},
+				{"type": "hour", "from": 22, "to": 3}
+			],
+			"notes": "Draft. Needs a second pass, and a talk with Leo after it: does he ever find out she read it?",
+			"start": "n1",
+			"nodes": {
+				"n1": {
+					"mode": "branch",
+					"options": [
+						{
+							"id": "o1",
+							"if": [
+								{"type": "place", "is": ["beach"]}
+							],
+							"reply": [
+								{"who": "narrator", "text": "Mia is sitting at the end of the pier, shoes off, feet over the black water."}
+							],
+							"next": "n2"
+						},
+						{
+							"id": "o2",
+							"reply": [
+								{"who": "narrator", "text": "The café is dark but for one lamp. Mia is doing the accounts, and losing."}
+							],
+							"next": "n2"
+						}
+					]
+				},
+				"n2": {
+					"lines": [
+						{"who": "mia", "text": "Can't sleep either? Sit down.", "mood": "sad"}
+					],
+					"mode": "choice",
+					"options": [
+						{
+							"id": "o3",
+							"text": "I found this in my flat.",
+							"if": [
+								{"type": "item", "item": "old_letter", "op": ">=", "value": 1}
+							],
+							"next": "n3"
+						},
+						{
+							"id": "o4",
+							"text": "Just passing.",
+							"reply": [
+								{"who": "mia", "text": "At this hour? You're either a poet or a burglar."}
+							],
+							"next": "end"
+						}
+					]
+				},
+				"n3": {
+					"lines": [
+						{"who": "narrator", "text": "She turns the envelope over. Her name is on it, in faded ink."},
+						{"who": "mia", "text": "That's Leo's handwriting. Your flat used to be his, you know."},
+						{"who": "narrator", "text": "She opens it, reads it twice, and laughs until she has to wipe her eyes."},
+						{"who": "mia", "text": "“Dear Mia, I'm no good with words, so here are a few: your coffee is awful and I love you.”", "mood": "happy"},
+						{"who": "mia", "text": "Thirty years in a wall. The coward. The sweet, daft coward.", "mood": "happy"}
+					],
+					"effects": [
+						{"type": "item", "item": "old_letter", "delta": -1},
+						{"type": "flag", "name": "letter_read", "value": true},
+						{"type": "relation", "stat": "trust", "from": "mia", "to": "leo", "delta": 2},
+						{"type": "event", "name": "play_music", "text": "Something slow, then something less slow."}
+					],
+					"mode": "line",
+					"next": "end"
+				}
+			}
+		}
+	]
+}
