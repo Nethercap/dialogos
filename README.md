@@ -22,7 +22,11 @@ saves them as one plain JSON file that your game reads.
 
 ## Run it
 
-**No install:** open `web/index.html` in your browser (or host the `web` folder, for example on
+**Online:** [nethercap.github.io/dialogos](https://nethercap.github.io/dialogos/), or
+[with the example open](https://nethercap.github.io/dialogos/?example). Your project stays in
+your browser; nothing is uploaded.
+
+**No install:** open `web/index.html` in your browser (or host this folder, for example on
 GitHub Pages). The project is kept in the browser as you type. In Chrome and Edge,
 *File → Save to a file…* writes straight to a file on disk; anywhere, *File → Download .json*.
 
